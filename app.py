@@ -1,4 +1,6 @@
+
 import streamlit as st
+st.set_page_config(page_title="Liver & Cancer Prediction", layout="wide")
 import numpy as np
 import pandas as pd
 import joblib
@@ -8,7 +10,7 @@ import joblib
 # -------------------------------
 # Page Config
 # -------------------------------
-st.set_page_config(page_title="Liver & Cancer Prediction", layout="wide")
+
 
 # -------------------------------
 # Custom CSS
@@ -176,7 +178,7 @@ def predict_case(input_df, cancer_check=True):
 # -------------------------------
 # Page Config
 # -------------------------------
-st.set_page_config(page_title="Liver & Cancer Prediction", layout="wide")
+
 
 
 
@@ -248,8 +250,7 @@ elif page == "Predict":
                 st.success(f"✅ No Liver Disease Detected (Confidence: {result['Confidence']})")
             else:
                 st.error(f"⚠️ {result['Disease']} Detected (Confidence: {result['Confidence']})")
-                if "Cancer_Risk" in result:
-                    st.warning(f"🔬 Cancer Risk: {result['Cancer_Risk']}")
+                
 
     # -------------------------------
     # CSV Upload
@@ -258,7 +259,16 @@ elif page == "Predict":
         uploaded_file = st.file_uploader("Upload CSV File with Test Cases", type=["csv"])
         if uploaded_file:
             df = pd.read_csv(uploaded_file)
-
+            if "Gender" in df.columns:
+                df["Gender"] = df["Gender"].astype(str).str.strip().str.lower()
+                df["Gender"] = df["Gender"].replace({
+                    "male": 0, "m": 0,
+                    "female": 1, "f": 1
+                })
+            else:
+            	st.warning("⚠️ Gender column missing in CSV!")
+            
+            
             # Normalize once
             df.rename(columns={"Total_Proteins": "Total_Proteins"}, inplace=True)
 
@@ -270,8 +280,8 @@ elif page == "Predict":
             # Flatten predictions
             df["Disease"] = [p["Disease"] for p in predictions]
             df["Confidence"] = [p["Confidence"] for p in predictions]
-            if cancer_check:
-                df["Cancer_Risk"] = [p.get("Cancer_Risk", "N/A") for p in predictions]
+            
+             
 
             st.subheader("📊 Batch Predictions")
             st.dataframe(df)
@@ -279,4 +289,3 @@ elif page == "Predict":
             # Download option
             csv_out = df.to_csv(index=False).encode("utf-8")
             st.download_button("⬇️ Download Results", csv_out, "predictions.csv", "text/csv")
-
